@@ -241,8 +241,23 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+## RDD
+## HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes \
+					-Werror=strict-aliasing -O3 -fomit-frame-pointer \
+					-fmodulo-sched -fmodulo-sched-allow-regmoves
+
+##HOSTCXXFLAGS = -O2
+HOSTCXXFLAGS = -O3
+
+## RDD -
+GRAPHITE_CFLAGS = -fgraphite-identity \
+						-floop-block \
+						-floop-interchange \
+						-floop-strip-mine \
+						-ftree-loop-distribution \
+						-ftree-loop-linear \
+						-ftree-parallelize-loops
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -373,11 +388,34 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
+##KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+##		   -fno-strict-aliasing -fno-common \
+##		   -Werror-implicit-function-declaration \
+##		   -Wno-format-security \
+##		   -fno-delete-null-pointer-checks
+
+## RDD - should do this eventually.  Far too many sins for that yet.
+## -Werror=strict-aliasing
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
+		   -Wno-strict-aliasing -fstrict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks \
+			-fgraphite-identity -floop-block \
+			-floop-interchange -floop-strip-mine \
+			-ftree-loop-distribution -ftree-loop-linear 
+
+#GRAPHITE_CFLAGS = -fgraphite-identity \
+#						-floop-block \
+#						-floop-interchange \
+#						-floop-strip-mine \
+#						-ftree-loop-distribution \
+#						-ftree-loop-linear \
+#						-ftree-parallelize-loops
+
+##KBUILD_CFLAGS += $(GRAPHITE_CFLAGS)
+
+
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
