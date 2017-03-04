@@ -8,6 +8,9 @@
 # published by the Free Software Foundation.
 #
 
+# RDD - fix this right
+ccflags-y += -Wno-unused-const-variable
+
 obj-$(CONFIG_CRYPTO_SHA1_ARM64_CE) += sha1-ce.o
 sha1-ce-y := sha1-ce-glue.o sha1-ce-core.o
 

@@ -27,7 +27,7 @@
 
 /**=========================================================================
 
-                       EDIT HISTORY FOR FILE
+  EDIT HISTORY FOR FILE
 
 
   This section contains comments describing changes made to the module.
@@ -69,21 +69,23 @@
  * So TX sleep must be less than 100msec
  * Every 20msec TX frame will goes out.
  * 10 frame means 2seconds TX operation */
-static const hdd_tmLevelAction_t thermalMigrationAction[WLAN_HDD_TM_LEVEL_MAX] =
-{
-   /* TM Level 0, Do nothing, just normal operation */
-   {1, 0, 0, 0, 0xFFFFF},
-   /* Tm Level 1, disable TX AMPDU */
-   {0, 0, 0, 0, 0xFFFFF},
-   /* TM Level 2, disable AMDPU,
-    * TX sleep 100msec if TX frame count is larger than 16 during 300msec */
-   {0, 0, 100, 300, 16},
-   /* TM Level 3, disable AMDPU,
-    * TX sleep 500msec if TX frame count is larger than 11 during 500msec */
-   {0, 0, 500, 500, 11},
-   /* TM Level 4, MAX TM level, enter IMPS */
-   {0, 1, 1000, 500, 10}
-};
+// RDD - unused?
+//atic const hdd_tmLevelAction_t thermalMigrationAction[WLAN_HDD_TM_LEVEL_MAX] =
+//
+// /* TM Level 0, Do nothing, just normal operation */
+// {1, 0, 0, 0, 0xFFFFF},
+// /* Tm Level 1, disable TX AMPDU */
+// {0, 0, 0, 0, 0xFFFFF},
+// /* TM Level 2, disable AMDPU,
+//  * TX sleep 100msec if TX frame count is larger than 16 during 300msec */
+// {0, 0, 100, 300, 16},
+// /* TM Level 3, disable AMDPU,
+//  * TX sleep 500msec if TX frame count is larger than 11 during 500msec */
+// {0, 0, 500, 500, 11},
+// /* TM Level 4, MAX TM level, enter IMPS */
+// {0, 1, 1000, 500, 10}
+//
+
 #ifdef HAVE_WCNSS_SUSPEND_RESUME_NOTIFY
 static bool suspend_notify_sent;
 #endif
@@ -109,127 +111,127 @@ void hdd_wlan_suspend_resume_event(uint8_t state)
 
 /*----------------------------------------------------------------------------
 
-   @brief TX frame block timeout handler
-          Resume TX, and reset TX frame count
+  @brief TX frame block timeout handler
+  Resume TX, and reset TX frame count
 
-   @param hdd_context_t pHddCtx
-        Global hdd context
+  @param hdd_context_t pHddCtx
+  Global hdd context
 
-   @return NONE
+  @return NONE
 
-----------------------------------------------------------------------------*/
+  ----------------------------------------------------------------------------*/
 void hddDevTmTxBlockTimeoutHandler(void *usrData)
 {
-   hdd_context_t        *pHddCtx = (hdd_context_t *)usrData;
-   hdd_adapter_t        *staAdapater;
-   /* Sanity, This should not happen */
-   if(NULL == pHddCtx)
-   {
-      VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
-                "%s: NULL Context", __func__);
-      VOS_ASSERT(0);
-      return;
-   }
+	hdd_context_t        *pHddCtx = (hdd_context_t *)usrData;
+	hdd_adapter_t        *staAdapater;
+	/* Sanity, This should not happen */
+	if(NULL == pHddCtx)
+	{
+		VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
+				"%s: NULL Context", __func__);
+		VOS_ASSERT(0);
+		return;
+	}
 
-   staAdapater = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
+	staAdapater = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
 
-   if ((NULL == staAdapater) ||
-       (WLAN_HDD_ADAPTER_MAGIC != staAdapater->magic)) {
-      VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
-                FL("invalid Adapter %p"), staAdapater);
-      VOS_ASSERT(0);
-      return;
-   }
+	if ((NULL == staAdapater) ||
+			(WLAN_HDD_ADAPTER_MAGIC != staAdapater->magic)) {
+		VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
+				FL("invalid Adapter %p"), staAdapater);
+		VOS_ASSERT(0);
+		return;
+	}
 
-   if(mutex_lock_interruptible(&pHddCtx->tmInfo.tmOperationLock))
-   {
-      VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
-                "%s: Acquire lock fail", __func__);
-      return;
-   }
-   pHddCtx->tmInfo.txFrameCount = 0;
+	if(mutex_lock_interruptible(&pHddCtx->tmInfo.tmOperationLock))
+	{
+		VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
+				"%s: Acquire lock fail", __func__);
+		return;
+	}
+	pHddCtx->tmInfo.txFrameCount = 0;
 
-   /* Resume TX flow */
+	/* Resume TX flow */
 
-   hddLog(LOG1, FL("Enabling queues"));
-   netif_tx_wake_all_queues(staAdapater->dev);
-   pHddCtx->tmInfo.qBlocked = VOS_FALSE;
-   mutex_unlock(&pHddCtx->tmInfo.tmOperationLock);
+	hddLog(LOG1, FL("Enabling queues"));
+	netif_tx_wake_all_queues(staAdapater->dev);
+	pHddCtx->tmInfo.qBlocked = VOS_FALSE;
+	mutex_unlock(&pHddCtx->tmInfo.tmOperationLock);
 
-   return;
+	return;
 }
 
 /*----------------------------------------------------------------------------
 
-   @brief Register function
-        Register Thermal Mitigation Level Changed handle callback function
+  @brief Register function
+  Register Thermal Mitigation Level Changed handle callback function
 
-   @param hdd_context_t pHddCtx
-        Global hdd context
+  @param hdd_context_t pHddCtx
+  Global hdd context
 
-   @return General status code
-        VOS_STATUS_SUCCESS       Registration Success
-        VOS_STATUS_E_FAILURE     Registration Fail
+  @return General status code
+  VOS_STATUS_SUCCESS       Registration Success
+  VOS_STATUS_E_FAILURE     Registration Fail
 
-----------------------------------------------------------------------------*/
+  ----------------------------------------------------------------------------*/
 VOS_STATUS hddDevTmRegisterNotifyCallback(hdd_context_t *pHddCtx)
 {
-   VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_INFO,
-             "%s: Register TM Handler", __func__);
+	VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_INFO,
+			"%s: Register TM Handler", __func__);
 
-   wcnss_register_thermal_mitigation(pHddCtx->parent_dev ,hddDevTmLevelChangedHandler);
+	wcnss_register_thermal_mitigation(pHddCtx->parent_dev ,hddDevTmLevelChangedHandler);
 
-   /* Set Default TM Level as Lowest, do nothing */
-   pHddCtx->tmInfo.currentTmLevel = WLAN_HDD_TM_LEVEL_0;
-   vos_mem_zero(&pHddCtx->tmInfo.tmAction, sizeof(hdd_tmLevelAction_t));
-   vos_timer_init(&pHddCtx->tmInfo.txSleepTimer,
-                  VOS_TIMER_TYPE_SW,
-                  hddDevTmTxBlockTimeoutHandler,
-                  (void *)pHddCtx);
-   mutex_init(&pHddCtx->tmInfo.tmOperationLock);
-   pHddCtx->tmInfo.txFrameCount = 0;
-   pHddCtx->tmInfo.blockedQueue = NULL;
-   pHddCtx->tmInfo.qBlocked     = VOS_FALSE;
-   return VOS_STATUS_SUCCESS;
+	/* Set Default TM Level as Lowest, do nothing */
+	pHddCtx->tmInfo.currentTmLevel = WLAN_HDD_TM_LEVEL_0;
+	vos_mem_zero(&pHddCtx->tmInfo.tmAction, sizeof(hdd_tmLevelAction_t));
+	vos_timer_init(&pHddCtx->tmInfo.txSleepTimer,
+			VOS_TIMER_TYPE_SW,
+			hddDevTmTxBlockTimeoutHandler,
+			(void *)pHddCtx);
+	mutex_init(&pHddCtx->tmInfo.tmOperationLock);
+	pHddCtx->tmInfo.txFrameCount = 0;
+	pHddCtx->tmInfo.blockedQueue = NULL;
+	pHddCtx->tmInfo.qBlocked     = VOS_FALSE;
+	return VOS_STATUS_SUCCESS;
 }
 
 /*----------------------------------------------------------------------------
 
-   @brief Un-Register function
-        Un-Register Thermal Mitigation Level Changed handle callback function
+  @brief Un-Register function
+  Un-Register Thermal Mitigation Level Changed handle callback function
 
-   @param hdd_context_t pHddCtx
-        Global hdd context
+  @param hdd_context_t pHddCtx
+  Global hdd context
 
-   @return General status code
-        VOS_STATUS_SUCCESS       Un-Registration Success
-        VOS_STATUS_E_FAILURE     Un-Registration Fail
+  @return General status code
+  VOS_STATUS_SUCCESS       Un-Registration Success
+  VOS_STATUS_E_FAILURE     Un-Registration Fail
 
-----------------------------------------------------------------------------*/
+  ----------------------------------------------------------------------------*/
 VOS_STATUS hddDevTmUnregisterNotifyCallback(hdd_context_t *pHddCtx)
 {
-   VOS_STATUS vosStatus = VOS_STATUS_SUCCESS;
+	VOS_STATUS vosStatus = VOS_STATUS_SUCCESS;
 
-   wcnss_unregister_thermal_mitigation(hddDevTmLevelChangedHandler);
+	wcnss_unregister_thermal_mitigation(hddDevTmLevelChangedHandler);
 
-   if(VOS_TIMER_STATE_RUNNING ==
-           vos_timer_getCurrentState(&pHddCtx->tmInfo.txSleepTimer))
-   {
-       vosStatus = vos_timer_stop(&pHddCtx->tmInfo.txSleepTimer);
-       if(!VOS_IS_STATUS_SUCCESS(vosStatus))
-       {
-           VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
-                                "%s: Timer stop fail", __func__);
-       }
-   }
+	if(VOS_TIMER_STATE_RUNNING ==
+			vos_timer_getCurrentState(&pHddCtx->tmInfo.txSleepTimer))
+	{
+		vosStatus = vos_timer_stop(&pHddCtx->tmInfo.txSleepTimer);
+		if(!VOS_IS_STATUS_SUCCESS(vosStatus))
+		{
+			VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
+					"%s: Timer stop fail", __func__);
+		}
+	}
 
-   // Destroy the vos timer...
-   vosStatus = vos_timer_destroy(&pHddCtx->tmInfo.txSleepTimer);
-   if (!VOS_IS_STATUS_SUCCESS(vosStatus))
-   {
-       VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
-                            "%s: Fail to destroy timer", __func__);
-   }
+	// Destroy the vos timer...
+	vosStatus = vos_timer_destroy(&pHddCtx->tmInfo.txSleepTimer);
+	if (!VOS_IS_STATUS_SUCCESS(vosStatus))
+	{
+		VOS_TRACE(VOS_MODULE_ID_HDD,VOS_TRACE_LEVEL_ERROR,
+				"%s: Fail to destroy timer", __func__);
+	}
 
-   return VOS_STATUS_SUCCESS;
+	return VOS_STATUS_SUCCESS;
 }
